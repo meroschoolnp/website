@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <!-- Squircle Rounded Base -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  
+  <!-- Crown / Academic Crest top -->
+  <polygon points="256,110 274,136 298,124 286,155 226,155 214,124 238,136" fill="url(#gold)" />
+  
+  <!-- Open Book of Knowledge -->
+  <path d="M 256,190 Q 200,165 150,175 L 150,225 Q 200,215 256,240 Q 312,215 362,175 L 362,225 Q 312,215 256,240 Z" fill="url(#gold)" opacity="0.95" />
+  
+  <!-- Architectural Geometric M Monogram -->
+  <path d="M 140,320 L 140,215 L 182,215 L 256,290 L 330,215 L 372,215 L 372,320 L 332,320 L 332,258 L 268,322 L 244,322 L 180,258 L 180,320 Z" fill="url(#m-grad)" />
+  
+  <!-- Subtle M Contour Highlights -->
+  <path d="M 140,320 L 140,215 L 160,215 L 160,305 L 180,305 L 180,320 Z" fill="#7dd3fc" opacity="0.8" />
+  <path d="M 372,320 L 372,215 L 352,215 L 352,305 L 332,305 L 332,320 Z" fill="#0284c7" opacity="0.6" />
+  
+  <!-- Underline Brand Baseline -->
+  <rect x="180" y="340" width="152" height="10" rx="5" fill="url(#gold)" />
+</svg>

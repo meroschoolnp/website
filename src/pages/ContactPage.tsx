@@ -1,0 +1,639 @@
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  Send,
+  CheckCircle,
+  ChevronDown,
+} from 'lucide-react';
+import { SCHOOL_CONTACT } from '@/src/config/contactInfo';
+import { SEO } from '@/src/components/SEO';
+import { useLanguage } from '@/src/context/LanguageContext';
+
+type EnquiryType = 'general_contact' | 'onsite_demo' | 'video_demo' | 'support_ticket';
+
+const isValidEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+const isValidPhone = (value: string): boolean => value.replace(/\D/g, '').length >= 7;
+
+type InquiryTopic = 'general' | 'onsite_demo' | 'video_demo' | 'support';
+
+const resolveInitialTopic = (params: URLSearchParams): InquiryTopic => {
+  const type = params.get('type');
+  const mode = params.get('mode');
+  if (type === 'support') return 'support';
+  if (type === 'demo' || params.get('demo') === 'true') {
+    return mode === 'video' ? 'video_demo' : 'onsite_demo';
+  }
+  return 'general';
+};
+
+export const ContactPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const { isNepali, pick } = useLanguage();
+
+  const [contactForm, setContactForm] = useState({
+    topic: resolveInitialTopic(searchParams) as InquiryTopic,
+    fullName: '',
+    schoolName: '',
+    phone: '',
+    email: '',
+    message: '',
+  });
+
+  const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
+  const [formErrors, setFormErrors] = useState<{ phone?: string; email?: string }>({});
+
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type === 'support' || type === 'demo' || searchParams.get('demo') === 'true') {
+      setContactForm((prev) => ({ ...prev, topic: resolveInitialTopic(searchParams) }));
+    }
+  }, [searchParams]);
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactForm.fullName.trim() || !contactForm.phone.trim() || !contactForm.message.trim()) {
+      toast.error(
+        pick(
+          'Please fill in your name, phone number, and message.',
+          'कृपया तपाईंको नाम, फोन नम्बर र सन्देश भर्नुहोस्।'
+        )
+      );
+      return;
+    }
+
+    const errors: { phone?: string; email?: string } = {};
+    if (!isValidPhone(contactForm.phone)) {
+      errors.phone = pick(
+        'Enter a valid 7+ digit mobile or landline number.',
+        'मान्य ७+ अंकको मोबाइल वा ल्यान्डलाइन नम्बर लेख्नुहोस्।'
+      );
+    }
+    if (contactForm.email.trim() && !isValidEmail(contactForm.email)) {
+      errors.email = pick(
+        'Enter a valid email address (e.g. name@school.edu.np).',
+        'मान्य इमेल ठेगाना लेख्नुहोस् (जस्तै: name@school.edu.np)।'
+      );
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error(pick('Please check the highlighted contact details.', 'कृपया रातो चिन्ह लगाइएका विवरण जाँच गर्नुहोस्।'));
+      return;
+    }
+    setFormErrors({});
+
+    const topicMap: Record<InquiryTopic, { prefix: string; type: EnquiryType; label: string }> = {
+      general: { prefix: 'MS-MSG', type: 'general_contact', label: 'General Inquiry' },
+      onsite_demo: { prefix: 'DEMO-ONSITE', type: 'onsite_demo', label: 'Free Campus Demo' },
+      video_demo: { prefix: 'DEMO-VIDEO', type: 'video_demo', label: 'Live Video Demo' },
+      support: { prefix: 'MS-DESK', type: 'support_ticket', label: 'Technical & Hardware Support' },
+    };
+
+    const selected = topicMap[contactForm.topic];
+    const refNo = `${selected.prefix}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    try {
+      const stored = JSON.parse(localStorage.getItem('meroschool_website_enquiries') || '[]');
+      stored.unshift({
+        referenceNo: refNo,
+        type: selected.type,
+        schoolName: contactForm.schoolName.trim() || 'General Inquiry',
+        contactPerson: contactForm.fullName.trim(),
+        role: 'Contact Inquiry',
+        phone: contactForm.phone.trim(),
+        email: contactForm.email.trim() || 'inquiry@school.edu.np',
+        city: 'Nepal',
+        message: `[${selected.label}] ${contactForm.message.trim()}`,
+        submittedAt: new Date().toISOString(),
+      });
+      localStorage.setItem('meroschool_website_enquiries', JSON.stringify(stored.slice(0, 50)));
+    } catch {
+      // Local storage fallback
+    }
+
+    setSubmittedRef(refNo);
+    toast.success(
+      pick(
+        'Thank you! Your message has been received.',
+        'धन्यवाद! तपाईंको सन्देश प्राप्त भएको छ।'
+      )
+    );
+  };
+
+  const faqs = [
+    {
+      q: pick(
+        'Can we request a free live demo or on-site school visit before deciding?',
+        'निर्णय गर्नुअघि के हामी निःशुल्क प्रत्यक्ष डेमो वा विद्यालयमै भ्रमण माग गर्न सक्छौं?'
+      ),
+      a: pick(
+        'Yes, 100%! We provide free on-site campus visits where our engineers bring pre-configured demonstration laptops, 80mm thermal receipt printers, and USB barcode scanners directly to your front office. You can also schedule a 1-on-1 private live video walkthrough via Zoom or Google Meet for your principal and administrative team.',
+        'हो, १००% निःशुल्क! हाम्रो इन्जिनियरिङ टोली प्रि-कन्फिगर गरिएको डेमो ल्यापटप, ८०mm थर्मल रसिद प्रिन्टर र USB बारकोड स्क्यानरसहित तपाईंको कार्यालयमै आएर प्रत्यक्ष प्रदर्शन गर्दछ। प्रधानाध्यापक र प्रशासन टोलीका लागि Zoom वा Google Meet मार्फत १-अन-१ भिडियो डेमो पनि मिलाउन सकिन्छ।'
+      ),
+    },
+    {
+      q: pick(
+        'Does MeroSchool support barcode scanners and POS thermal printers?',
+        'के MeroSchool ले बारकोड स्क्यानर र POS थर्मल प्रिन्टर सपोर्ट गर्छ?'
+      ),
+      a: pick(
+        'Yes! MeroSchool connects natively via USB HID keyboard emulation to any standard 1D/2D laser barcode scanner for instant student lookup and library circulation, plus direct ESC/POS 80mm and 58mm thermal receipt printing for 2-second cash counter fee slips and CR80 PVC bus/ID passes.',
+        'हो! MeroSchool ले शून्य अतिरिक्त ड्राइभरमै कुनै पनि मानक USB HID लेजर बारकोड स्क्यानरबाट विद्यार्थी खोजी र पुस्तकालय पुस्तक लेनदेन सपोर्ट गर्छ, र ८०mm/५८mm ESC/POS थर्मल रसिद प्रिन्टर तथा CR80 PVC बस/परिचयपत्र छपाइ सिधै सञ्चालन गर्दछ।'
+      ),
+    },
+    {
+      q: pick(
+        'Does the MeroSchool dashboard require an internet connection or cloud support?',
+        'के MeroSchool ड्यासबोर्ड चलाउन इन्टरनेट वा क्लाउड सपोर्ट चाहिन्छ?'
+      ),
+      a: pick(
+        'No. After Super Admin creates your school account, your school signs in and operates 100% offline. Every dashboard activity — student records, fee ledgers, exam marks, and daily attendance — executes locally on your campus computer with zero cloud support.',
+        'पर्दैन। सुपर एडमिनले विद्यालयको खाता सिर्जना गरिदिएपछि विद्यालयले लगइन गरेर १००% अफलाइन चलाउँछ। विद्यार्थी अभिलेख, शुल्क खाता, परीक्षा अंक र हाजिरी सबै बिना क्लाउड सपोर्ट विद्यालयकै कम्प्युटरमा चल्दछन्।'
+      ),
+    },
+    {
+      q: pick(
+        'Which operating systems does MeroSchool support?',
+        'MeroSchool कुन–कुन अपरेटिङ सिस्टममा चल्दछ?'
+      ),
+      a: pick(
+        'MeroSchool natively supports Windows 10 & 11 (64-bit and ARM64), macOS 11.0+ (Universal DMG for Apple Silicon M1/M2/M3/M4 & Intel), and all modern Linux distributions (Debian, Ubuntu, Fedora, Arch, openSUSE).',
+        'MeroSchool Windows 10 र 11 (६४-बिट र ARM64), macOS 11.0+ (Apple Silicon र Intel) तथा आधुनिक Linux वितरणहरू (Debian, Ubuntu, Fedora, Arch, openSUSE) मा नेटिभ रूपमा चल्दछ।'
+      ),
+    },
+    {
+      q: pick(
+        'How do we back up our school’s database and financial records?',
+        'हामी विद्यालयको डेटाबेस र आर्थिक अभिलेखको ब्याकअप कसरी लिन्छौं?'
+      ),
+      a: pick(
+        'Inside the app under the Database & Backup module (/backup), you can generate a complete, encrypted campus backup snapshot with one click. You can save this backup directly to a USB flash drive, external hard drive, or local network NAS.',
+        'एपभित्रको Database & Backup मोड्युल (/backup) बाट एकै क्लिकमा सुरक्षित ब्याकअप स्न्यापसट बनाएर USB पेनड्राइभ, बाहिरी हार्ड ड्राइभ वा स्थानीय NAS मा सुरक्षित राख्न सकिन्छ।'
+      ),
+    },
+    {
+      q: pick(
+        'Can we customize the school name, logo, address, and report cards?',
+        'के हामी विद्यालयको नाम, लोगो, ठेगाना र लब्धाङ्कपत्र अनुकूलन गर्न सक्छौं?'
+      ),
+      a: pick(
+        'Absolutely. MeroSchool is an offline ERP designed for any school. In the Settings module, you can upload your school’s crest/logo, enter your school name and address, choose your grading standard (NEB, CBSE, GPA), and configure custom fee structures.',
+        'अवश्य सकिन्छ। MeroSchool हरेक विद्यालयका लागि अनुकूलित गर्न सकिने अफलाइन ईआरपी हो। Settings मा विद्यालयको लोगो, नाम, ठेगाना, ग्रेडिङ प्रणाली (NEB, CBSE, GPA) र शुल्क संरचना सहजै सेट गर्न सकिन्छ।'
+      ),
+    },
+    {
+      q: pick(
+        'What are the hardware requirements to run MeroSchool?',
+        'MeroSchool चलाउन कस्तो कम्प्युटर हार्डवेयर आवश्यक पर्छ?'
+      ),
+      a: pick(
+        'MeroSchool is an extremely lightweight (~15MB installer) native desktop app. It runs smoothly on any desktop or laptop with at least 2 GB of RAM and Windows 10, macOS 11+, or Linux.',
+        'MeroSchool अत्यन्त हल्का (~१५ MB इन्स्टलर) नेटिभ डेस्कटप एप हो। कम्तीमा २ GB RAM र Windows 10, macOS 11+ वा Linux भएको कुनै पनि डेस्कटप वा ल्यापटपमा सहजै चल्दछ।'
+      ),
+    },
+    {
+      q: pick(
+        'Does MeroSchool include a School Calendar for holidays, announcements, and notices?',
+        'के MeroSchool मा बिदा, घोषणा र सूचनाका लागि विद्यालय पात्रो समावेश छ?'
+      ),
+      a: pick(
+        'Yes. The built-in dual Bikram Sambat (B.S.) and Gregorian (A.D.) School Calendar manages public holidays, seasonal breaks, parent announcements, official notices, and campus events—automatically adjusting attendance working days and printing A4 noticeboard circulars offline.',
+        'हो। अन्तर्निर्मित दोहोरो वि.सं. र ई.सं. विद्यालय पात्रोले सार्वजनिक बिदा, मौसमी बिदा, अभिभावक घोषणा, आधिकारिक सूचना र विद्यालय कार्यक्रम व्यवस्थापन गर्छ र प्रिन्टयोग्य A4 सूचना परिपत्र तयार पार्छ।'
+      ),
+    },
+    {
+      q: pick(
+        'Can multiple school computers connect over local LAN without internet?',
+        'के इन्टरनेट बिना नै विद्यालयका धेरै कम्प्युटरहरू स्थानीय LAN बाट जोडिन सक्छन्?'
+      ),
+      a: pick(
+        'Yes. Reception cashiers, staff-room teachers, and the library desk can connect concurrently over your school’s existing local Wi-Fi or Gigabit Ethernet LAN with zero internet dependency.',
+        'सक्छन्। लेखा काउन्टर, शिक्षक कक्ष र पुस्तकालयका कम्प्युटरहरू इन्टरनेट बिना नै विद्यालयको स्थानीय Wi-Fi वा इथरनेट LAN मार्फत एकसाथ चल्न सक्छन्।'
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-16 lg:space-y-24 pb-16">
+      <SEO
+        title={pick(
+          'Book Free Demo & Contact Desk',
+          'निःशुल्क डेमो र सम्पर्क डेस्क'
+        )}
+        description={pick(
+          'Book a 100% free on-site campus demo or video walkthrough of MeroSchool offline desktop ERP. Call our Kathmandu desk or email meroschool.np@gmail.com.',
+          '१००% निःशुल्क विद्यालय डेमो वा प्रत्यक्ष भिडियो डेमो बुक गर्नुहोस्। काठमाडौं डेस्कमा फोन वा meroschool.np@gmail.com मा इमेल गर्नुहोस्।'
+        )}
+        keywords={pick(
+          'MeroSchool contact, book school ERP demo, free campus walkthrough Kathmandu, school software support email, offline ERP demo Nepal',
+          'MeroSchool सम्पर्क, निःशुल्क विद्यालय डेमो, विद्यालय सफ्टवेयर सहायता, अफलाइन ईआरपी डेमो'
+        )}
+        canonicalPath="/contact"
+        breadcrumbs={[
+          { name: pick('Home', 'गृहपृष्ठ'), path: '/' },
+          { name: pick('Contact & Demo', 'सम्पर्क र डेमो'), path: '/contact' },
+        ]}
+        structuredData={[
+          {
+            '@type': 'ContactPage',
+            name: pick('Contact & Demo Desk — MeroSchool', 'सम्पर्क तथा डेमो डेस्क — MeroSchool'),
+            inLanguage: isNepali ? 'ne' : 'en',
+            mainEntity: {
+              '@type': 'Organization',
+              name: SCHOOL_CONTACT.appName,
+              email: SCHOOL_CONTACT.email,
+              telephone: SCHOOL_CONTACT.phone,
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: SCHOOL_CONTACT.address.street,
+                addressLocality: SCHOOL_CONTACT.address.city,
+                addressRegion: SCHOOL_CONTACT.address.province,
+                addressCountry: 'NP',
+              },
+              contactPoint: {
+                '@type': 'ContactPoint',
+                telephone: SCHOOL_CONTACT.phoneMobile,
+                email: SCHOOL_CONTACT.email,
+                contactType: 'customer support',
+                availableLanguage: ['English', 'Nepali'],
+              },
+            },
+          },
+          {
+            '@type': 'FAQPage',
+            inLanguage: isNepali ? 'ne' : 'en',
+            mainEntity: faqs.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: item.a,
+              },
+            })),
+          },
+        ]}
+      />
+      {/* 1. Header */}
+      <section className="pt-6 sm:pt-10 lg:pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl space-y-3 sm:space-y-4">
+          <div className="text-xs sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+            {pick('Contact & Demo Desk', 'सम्पर्क तथा डेमो डेस्क')}
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 dark:text-white leading-[1.12] text-balance">
+            {pick('Get in Touch with MeroSchool', 'MeroSchool टोलीसँग सम्पर्क गर्नुहोस्')}
+          </h1>
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+            {isNepali ? (
+              <>
+                निःशुल्क विद्यालय डेमो (थर्मल प्रिन्टर र बारकोड स्क्यानरसहित), प्राविधिक सहायता वा सामान्य जानकारीका लागि हामीलाई सन्देश पठाउनुहोस्।
+              </>
+            ) : (
+              <>
+                Send us a quick message for a free campus demo (with thermal printers & barcode scanners), technical assistance, or any general question about MeroSchool.
+              </>
+            )}
+          </p>
+        </div>
+      </section>
+
+      {/* 2. Contact Details & General Contact Form (Horizontal Split on Desktop) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left: Contact Details */}
+          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start gap-4 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {pick('Software HQ', 'मुख्य कार्यालय')}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {pick(SCHOOL_CONTACT.address.full, 'वडा नं. ४, बालुवाटार, काठमाडौं, बागमती प्रदेश, नेपाल')}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start gap-4 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+                <Phone className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {pick('Demo Helplines', 'डेमो तथा सहायता फोन')}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-mono break-words">
+                  <a href={`tel:${SCHOOL_CONTACT.phone}`} className="hover:underline block">
+                    {SCHOOL_CONTACT.phone}
+                  </a>
+                  <a
+                    href={`tel:${SCHOOL_CONTACT.phoneMobile}`}
+                    className="hover:underline font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5"
+                  >
+                    {SCHOOL_CONTACT.phoneMobile} {pick('(WhatsApp Demo Desk)', '(व्हाट्सएप डेमो डेस्क)')}
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start gap-4 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {pick('Official Support Email', 'आधिकारिक सहायता इमेल')}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {pick('Technical & Sales:', 'प्राविधिक र बिक्री:')}{' '}
+                  <a
+                    href={`mailto:${SCHOOL_CONTACT.email}`}
+                    className="text-indigo-600 dark:text-indigo-400 font-mono font-bold hover:underline break-all"
+                  >
+                    {SCHOOL_CONTACT.email}
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start gap-4 shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {pick('Support & Demo Hours', 'सम्पर्क र डेमो समय')}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <span className="block">
+                    {isNepali ? 'आइतबार–शुक्रबार: बिहान ८:०० – साँझ ६:०० बजे (NPT)' : SCHOOL_CONTACT.hours.weekdays}
+                  </span>
+                  <span className="block mt-0.5">
+                    {isNepali ? 'शनिबार: इमेलमार्फत आकस्मिक अफलाइन सहायता' : SCHOOL_CONTACT.hours.saturday}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: General Contact Form */}
+          <div className="lg:col-span-7">
+            {submittedRef ? (
+              <div className="p-6 sm:p-8 rounded-3xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/30 space-y-5 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {pick('Message Received', 'सन्देश प्राप्त भयो')}
+                    </h2>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {pick('Reference #:', 'सन्दर्भ नम्बर:')}{' '}
+                      <strong className="font-mono tabular-nums text-emerald-700 dark:text-emerald-300">{submittedRef}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {isNepali ? (
+                    <>
+                      धन्यवाद, <strong>{contactForm.fullName}</strong>! हाम्रो टोलीले छिट्टै{' '}
+                      <strong>{contactForm.phone}</strong> मार्फत सम्पर्क गर्नेछ।
+                    </>
+                  ) : (
+                    <>
+                      Thank you, <strong>{contactForm.fullName}</strong>! Our team will reach out shortly at{' '}
+                      <strong>{contactForm.phone}</strong>
+                      {contactForm.email.trim() ? ` or ${contactForm.email.trim()}` : ''}.
+                    </>
+                  )}
+                </p>
+
+                <div className="flex flex-wrap gap-3 pt-1">
+                  <a
+                    href={`https://wa.me/${SCHOOL_CONTACT.phoneMobile.replace(/\D/g, '')}?text=Hello%20MeroSchool,%20reference%20${submittedRef}%20from%20${encodeURIComponent(contactForm.fullName)}.`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors min-h-[42px]"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{pick('Chat on WhatsApp', 'WhatsApp मा कुरा गर्नुहोस्')}</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmittedRef(null);
+                      setContactForm({
+                        topic: 'general',
+                        fullName: '',
+                        schoolName: '',
+                        phone: '',
+                        email: '',
+                        message: '',
+                      });
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer min-h-[42px]"
+                  >
+                    {pick('Send Another Message', 'अर्को सन्देश पठाउनुहोस्')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleContactSubmit}
+                className="p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-5 shadow-xs"
+              >
+                <div className="space-y-1 border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {pick('Send Us a Message', 'हामीलाई सन्देश पठाउनुहोस्')}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {pick(
+                      'Fill out the form below for a free school demo, pricing details, or support.',
+                      'निःशुल्क विद्यालय डेमो, मूल्य विवरण वा सहायताका लागि तलको साधारण फारम भर्नुहोस्।'
+                    )}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label htmlFor="contact-topic" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {pick('Subject / Inquiry Type', 'विषय / अनुरोध प्रकार')}
+                    </label>
+                    <select
+                      id="contact-topic"
+                      value={contactForm.topic}
+                      onChange={(e) => setContactForm({ ...contactForm, topic: e.target.value as InquiryTopic })}
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 min-h-[44px]"
+                    >
+                      <option value="general">{pick('General Inquiry', 'सामान्य जानकारी / सोधपुछ')}</option>
+                      <option value="onsite_demo">{pick('Request Free Campus Demo', 'निःशुल्क विद्यालय डेमो माग')}</option>
+                      <option value="video_demo">{pick('Schedule Live Video Walkthrough', 'प्रत्यक्ष भिडियो डेमो समय')}</option>
+                      <option value="support">{pick('Technical or Hardware Support', 'प्राविधिक वा हार्डवेयर सहायता')}</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="contact-name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {pick('Your Name *', 'तपाईंको नाम *')}
+                    </label>
+                    <input
+                      id="contact-name"
+                      type="text"
+                      required
+                      placeholder={pick('e.g. Narayan P. Bhattarai', 'उदा. नारायण प्र. भट्टराई')}
+                      value={contactForm.fullName}
+                      onChange={(e) => setContactForm({ ...contactForm, fullName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 min-h-[44px]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="contact-phone" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {pick('Phone / WhatsApp *', 'फोन / WhatsApp नम्बर *')}
+                    </label>
+                    <input
+                      id="contact-phone"
+                      type="tel"
+                      required
+                      aria-invalid={Boolean(formErrors.phone)}
+                      placeholder={pick('e.g. 9841234567', 'उदा. 9841234567')}
+                      value={contactForm.phone}
+                      onChange={(e) => {
+                        setContactForm({ ...contactForm, phone: e.target.value });
+                        if (formErrors.phone) setFormErrors((prev) => ({ ...prev, phone: undefined }));
+                      }}
+                      className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 min-h-[44px] ${
+                        formErrors.phone
+                          ? 'border-rose-500 focus:ring-rose-500'
+                          : 'border-slate-300 dark:border-slate-700 focus:ring-indigo-500'
+                      }`}
+                    />
+                    {formErrors.phone && (
+                      <p className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.phone}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="contact-email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {pick('Email Address', 'इमेल ठेगाना')}
+                    </label>
+                    <input
+                      id="contact-email"
+                      type="email"
+                      aria-invalid={Boolean(formErrors.email)}
+                      placeholder="e.g. principal@school.edu.np"
+                      value={contactForm.email}
+                      onChange={(e) => {
+                        setContactForm({ ...contactForm, email: e.target.value });
+                        if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: undefined }));
+                      }}
+                      className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 min-h-[44px] ${
+                        formErrors.email
+                          ? 'border-rose-500 focus:ring-rose-500'
+                          : 'border-slate-300 dark:border-slate-700 focus:ring-indigo-500'
+                      }`}
+                    />
+                    {formErrors.email && (
+                      <p className="text-[11px] text-rose-600 dark:text-rose-400">{formErrors.email}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="contact-school" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {pick('School / Institution (Optional)', 'विद्यालय / संस्थाको नाम (ऐच्छिक)')}
+                    </label>
+                    <input
+                      id="contact-school"
+                      type="text"
+                      placeholder={pick('e.g. Valley View Secondary School', 'उदा. भ्याली भ्यू माध्यमिक विद्यालय')}
+                      value={contactForm.schoolName}
+                      onChange={(e) => setContactForm({ ...contactForm, schoolName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 min-h-[44px]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <label htmlFor="contact-message" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {pick('Message *', 'सन्देश *')}
+                    </label>
+                    <textarea
+                      id="contact-message"
+                      required
+                      rows={4}
+                      placeholder={pick(
+                        'Tell us how we can help — demo request, school size, questions, or support...',
+                        'हामी तपाईंलाई कसरी सहयोग गर्न सक्छौं लेख्नुहोस् — डेमो अनुरोध, प्रश्न वा सहायता...'
+                      )}
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 px-6 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors cursor-pointer flex items-center justify-center gap-2 min-h-[44px]"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{pick('Send Message', 'सन्देश पठाउनुहोस्')}</span>
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Frequently Asked Questions Accordion */}
+      <section className="perf-section max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="text-center space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            {pick('Desktop Software FAQ', 'डेस्कटप सफ्टवेयर FAQ')}
+          </div>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            {pick('Frequently Asked Questions', 'बारम्बार सोधिने प्रश्नहरू')}
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {faqs.map((faq, idx) => {
+            const isOpen = expandedFaq === idx;
+            return (
+              <div
+                key={idx}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs"
+              >
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setExpandedFaq(isOpen ? null : idx)}
+                  className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                >
+                  <span>{faq.q}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
+                      isOpen ? 'rotate-180 text-indigo-600' : ''
+                    }`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+};
