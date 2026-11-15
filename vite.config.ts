@@ -10,4 +10,9 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname || process.cwd(), '.'),
     },
   },
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+    allowedHosts: true,
+  },
 });
