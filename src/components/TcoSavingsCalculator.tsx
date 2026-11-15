@@ -2,28 +2,21 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/src/context/LanguageContext';
+import { TCO_DEFAULTS, calculateTcoMetrics } from '@/src/data/tcoData';
 
 export const TcoSavingsCalculator: React.FC = () => {
   const navigate = useNavigate();
   const { pick } = useLanguage();
-  const [students, setStudents] = useState<number>(650);
-  const [monthlyPerStudentFee, setMonthlyPerStudentFee] = useState<number>(45);
-  const [years, setYears] = useState<number>(5);
+  const [students, setStudents] = useState<number>(TCO_DEFAULTS.students);
+  const [monthlyPerStudentFee, setMonthlyPerStudentFee] = useState<number>(
+    TCO_DEFAULTS.monthlyPerStudentFee
+  );
+  const [years, setYears] = useState<number>(TCO_DEFAULTS.years);
 
-  const metrics = useMemo(() => {
-    const annualCloudCost = students * monthlyPerStudentFee * 12;
-    const annualSmsAndServerAddons = 18000;
-    const totalCloudCost = (annualCloudCost + annualSmsAndServerAddons) * years;
-    const meroschoolPerpetualCost = 65000;
-    const estimatedSavings = Math.max(0, totalCloudCost - meroschoolPerpetualCost);
-
-    return {
-      annualCloudCost: annualCloudCost + annualSmsAndServerAddons,
-      totalCloudCost,
-      meroschoolPerpetualCost,
-      estimatedSavings,
-    };
-  }, [students, monthlyPerStudentFee, years]);
+  const metrics = useMemo(
+    () => calculateTcoMetrics(students, monthlyPerStudentFee, years),
+    [students, monthlyPerStudentFee, years]
+  );
 
   return (
     <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-10 space-y-8">

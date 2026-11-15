@@ -50,7 +50,7 @@ export const SEO: React.FC<SEOProps> = ({
   breadcrumbs,
   structuredData,
 }) => {
-  const { isNepali } = usePublicLanguage();
+  const { isNepali } = useLanguage();
 
   const fullTitle = useMemo(() => {
     if (!title) return 'MeroSchool — Offline Desktop School Management ERP';

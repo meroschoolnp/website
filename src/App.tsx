@@ -1,9 +1,9 @@
-import React from 'react';
-import { RouterProvider } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { ThemeProvider } from '@/src/context/ThemeContext';
-import { LanguageProvider } from '@/src/context/LanguageContext';
-import { router } from '@/src/router';
+import React from "react";
+import { RouterProvider } from "react-router-dom";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "@/src/context/ThemeContext";
+import { LanguageProvider } from "@/src/context/LanguageContext";
+import { router } from "@/src/router";
 
 class AppErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -11,7 +11,7 @@ class AppErrorBoundary extends React.Component<
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, message: '' };
+    this.state = { hasError: false, message: "" };
   }
 
   static getDerivedStateFromError(error: Error) {
@@ -26,7 +26,9 @@ class AppErrorBoundary extends React.Component<
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
               Something went wrong
             </h2>
-            <p className="text-xs text-slate-500 font-mono">{this.state.message}</p>
+            <p className="text-xs text-slate-500 font-mono">
+              {this.state.message}
+            </p>
             <button
               type="button"
               onClick={() => window.location.reload()}

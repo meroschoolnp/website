@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Monitor } from 'lucide-react';
+import React, { useState } from "react";
+import { Monitor } from "lucide-react";
 
 interface AppImageProps {
   src: string;
@@ -14,11 +14,11 @@ interface AppImageProps {
 export const AppImage: React.FC<AppImageProps> = ({
   src,
   alt,
-  aspectClass = 'aspect-[16/9]',
+  aspectClass = "aspect-[16/9]",
   priority = false,
   caption,
   fallbackTitle,
-  className = '',
+  className = "",
 }) => {
   const [failed, setFailed] = useState(false);
 
@@ -31,9 +31,9 @@ export const AppImage: React.FC<AppImageProps> = ({
           <img
             src={src}
             alt={alt}
-            loading={priority ? 'eager' : 'lazy'}
+            loading={priority ? "eager" : "lazy"}
             decoding="async"
-            fetchPriority={priority ? 'high' : 'auto'}
+            fetchPriority={priority ? "high" : "auto"}
             referrerPolicy="no-referrer"
             onError={() => setFailed(true)}
             className="w-full h-full object-cover transition-transform duration-300 ease-out hover:scale-[1.015]"

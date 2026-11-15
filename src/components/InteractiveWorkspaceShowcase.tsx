@@ -1,90 +1,38 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Receipt,
-  FileSpreadsheet,
-  CalendarCheck,
-  ShieldCheck,
   ArrowRight,
   Printer,
   Check,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useLanguage } from '@/src/context/LanguageContext';
+import { useLanguage } from "@/src/context/LanguageContext";
+import {
+  ShowcaseTabId,
+  WORKSPACE_TABS,
+  WorkspaceTabItem,
+} from "@/src/data/workspaceData";
 
-type ShowcaseTabId = 'fees' | 'exams' | 'attendance' | 'provisioning';
+export type { ShowcaseTabId, WorkspaceTabItem };
 
 export const InteractiveWorkspaceShowcase: React.FC = () => {
   const navigate = useNavigate();
-  const { pick } = useLanguage();
-  const [activeTab, setActiveTab] = useState<ShowcaseTabId>('fees');
-  const [gradingBoard, setGradingBoard] = useState<'NEB' | 'CBSE'>('NEB');
+  const { isNepali, pick } = useLanguage();
+  const [activeTab, setActiveTab] = useState<ShowcaseTabId>("fees");
+  const [gradingBoard, setGradingBoard] = useState<"NEB" | "CBSE">("NEB");
 
-  const tabs: {
-    id: ShowcaseTabId;
-    index: string;
-    label: string;
-    headline: string;
-    summary: string;
-    icon: React.ComponentType<{ className?: string }>;
-  }[] = [
-    {
-      id: 'fees',
-      index: '01',
-      label: pick('Fee Ledger & Cash Desk', 'शुल्क खाता र नगद डेस्क'),
-      headline: pick(
-        'Sub-2-second tuition billing & 80mm thermal receipts',
-        '२ सेकेन्डमै शुल्क बिलिङ र 80mm थर्मल रसिद'
-      ),
-      summary: pick(
-        'Search any scholar by admission number or barcode scan, apply scholarship waivers, settle partial dues, and spool direct ESC/POS receipts without waiting on internet round-trips.',
-        'दर्ता नम्बर वा बारकोड स्क्यानबाट तुरुन्त विद्यार्थी खोज्नुहोस्, छात्रवृत्ति छुट लागू गर्नुहोस्, आंशिक बक्यौता असुली गर्नुहोस् र इन्टरनेट प्रतीक्षा नगरी ESC/POS रसिद प्रिन्ट गर्नुहोस्।'
-      ),
-      icon: Receipt,
-    },
-    {
-      id: 'exams',
-      index: '02',
-      label: pick('NEB & CBSE Broadsheet', 'NEB र CBSE ब्रोडसिट'),
-      headline: pick(
-        'Instant GPA compilation across all subjects and sections',
-        'सबै विषय र सेक्सनको तत्काल GPA र नतिजा संकलन'
-      ),
-      summary: pick(
-        'Teachers enter theory and practical marks from staff-room LAN terminals. MeroSchool converts weighted totals to NEB CDC letter grades or CBSE 10-point GPA and renders print-ready broadsheets.',
-        'शिक्षकहरूले स्टाफ-रूम LAN टर्मिनलबाट सैद्धान्तिक र प्रयोगात्मक अंक प्रविष्ट गर्छन्। MeroSchool ले स्वतः NEB अक्षराङ्क वा CBSE १०-अंकीय GPA र प्रिन्ट-तयार ब्रोडसिट तयार पार्छ।'
-      ),
-      icon: FileSpreadsheet,
-    },
-    {
-      id: 'attendance',
-      index: '03',
-      label: pick('Homeroom Roll-Call', 'दैनिक कक्षा हाजिरी'),
-      headline: pick(
-        '60-second daily roll-call & printable absence registers',
-        '६० सेकेन्डमै दैनिक हाजिरी र प्रिन्ट गर्न मिल्ने रजिस्टर'
-      ),
-      summary: pick(
-        'Mark an entire section in seconds with one-click defaults, flag chronic absenteeism against threshold rules, and print physical notice slips with zero SMS or cloud dependencies.',
-        'एक क्लिकमै पूरै कक्षाको हाजिरी लगाउनुहोस्, न्यूनतम उपस्थिति सीमाअनुसार अनुपस्थित विद्यार्थी पहिचान गर्नुहोस् र SMS वा क्लाउड बिना अभिभावक सूचना स्लिप प्रिन्ट गर्नुहोस्।'
-      ),
-      icon: CalendarCheck,
-    },
-    {
-      id: 'provisioning',
-      index: '04',
-      label: pick('Super Admin & Offline Mode', 'सुपर एडमिन र अफलाइन मोड'),
-      headline: pick(
-        'Multi-school provisioning paired with 100% local offline execution',
-        'बहु-विद्यालय खाता सिर्जना र १००% स्थानीय अफलाइन सञ्चालन'
-      ),
-      summary: pick(
-        'Super Admin creates each institution’s account and LAN counter allocation. Once the school signs into its dashboard, all 44 modules execute strictly offline on local storage.',
-        'सुपर एडमिनले प्रत्येक विद्यालयको खाता र LAN काउन्टर संख्या तय गर्छ। विद्यालयले ड्यासबोर्डमा लगइन गरेपछि सबै ४४ मोड्युल स्थानीय भण्डारणमा पूर्णतः अफलाइन चल्छन्।'
-      ),
-      icon: ShieldCheck,
-    },
-  ];
+  const tabs = useMemo(
+    () =>
+      WORKSPACE_TABS.map((t) => ({
+        id: t.id,
+        index: t.index,
+        label: isNepali ? t.labelNe : t.labelEn,
+        headline: isNepali ? t.headlineNe : t.headlineEn,
+        summary: isNepali ? t.summaryNe : t.summaryEn,
+        icon: t.icon,
+      })),
+    [isNepali]
+  );
 
   const currentTab = tabs.find((t) => t.id === activeTab) || tabs[0];
 
@@ -103,15 +51,15 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`text-left px-3.5 py-3 rounded-xl transition-colors cursor-pointer flex items-center gap-3 min-h-[44px] ${
                   active
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-2xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-900/40'
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-900/40"
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                     active
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                      ? "bg-indigo-600 text-white"
+                      : "bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -120,7 +68,9 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
                   <div className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 font-semibold">
                     {tab.index}.
                   </div>
-                  <div className="text-xs font-semibold truncate">{tab.label}</div>
+                  <div className="text-xs font-semibold truncate">
+                    {tab.label}
+                  </div>
                 </div>
               </button>
             );
@@ -146,27 +96,38 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
 
           <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600 dark:text-slate-400">
-              <span>{pick('Crash-Safe Local Storage', 'सुरक्षित स्थानीय भण्डारण')}</span>
+              <span>
+                {pick("Crash-Safe Local Storage", "सुरक्षित स्थानीय भण्डारण")}
+              </span>
               <span aria-hidden="true">·</span>
-              <span>{pick('Zero Cloud Latency', 'शून्य क्लाउड विलम्ब')}</span>
+              <span>{pick("Zero Cloud Latency", "शून्य क्लाउड विलम्ब")}</span>
               <span aria-hidden="true">·</span>
-              <span>{pick('Keyboard Shortcut Ready', 'किबोर्ड सर्टकट सुविधा')}</span>
+              <span>
+                {pick("Keyboard Shortcut Ready", "किबोर्ड सर्टकट सुविधा")}
+              </span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => navigate('/features#receipt-simulator')}
+                onClick={() => navigate("/features#receipt-simulator")}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors cursor-pointer whitespace-nowrap"
               >
-                <span>{pick('Open Interactive Simulator', 'अन्तरक्रियात्मक सिम्युलेटर खोल्नुहोस्')}</span>
+                <span>
+                  {pick(
+                    "Open Interactive Simulator",
+                    "अन्तरक्रियात्मक सिम्युलेटर खोल्नुहोस्",
+                  )}
+                </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/contact?type=demo')}
+                onClick={() => navigate("/contact?type=demo")}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
               >
-                <span>{pick('Book Live Walkthrough', 'लाइभ डेमो बुक गर्नुहोस्')}</span>
+                <span>
+                  {pick("Book Live Walkthrough", "लाइभ डेमो बुक गर्नुहोस्")}
+                </span>
               </button>
             </div>
           </div>
@@ -174,103 +135,157 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
 
         {/* Right Interactive Realistic Screen Preview (7 cols) */}
         <div className="lg:col-span-7 p-6 sm:p-8 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col justify-center">
-          {activeTab === 'fees' && (
+          {activeTab === "fees" && (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    {pick('Scholar Fee Ledger · Grade 10 Section A', 'विद्यार्थी शुल्क खाता · कक्षा १० सेक्सन A')}
+                    {pick(
+                      "Scholar Fee Ledger · Grade 10 Section A",
+                      "विद्यार्थी शुल्क खाता · कक्षा १० सेक्सन A",
+                    )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    {pick('Double-entry running balance · ESC/POS Counter 01', 'दोहोरो लेखा चलन मौज्दात · ESC/POS काउन्टर ०१')}
+                    {pick(
+                      "Double-entry running balance · ESC/POS Counter 01",
+                      "दोहोरो लेखा चलन मौज्दात · ESC/POS काउन्टर ०१",
+                    )}
                   </div>
                 </div>
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
                   <Printer className="w-3.5 h-3.5" />
-                  <span>{pick('Thermal Ready', 'थर्मल प्रिन्ट तयार')}</span>
+                  <span>{pick("Thermal Ready", "थर्मल प्रिन्ट तयार")}</span>
                 </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 font-mono text-[11px]">
-                      <th className="py-2.5 px-4">{pick('Voucher #', 'भौचर नं.')}</th>
-                      <th className="py-2.5 px-4">{pick('Particulars', 'विवरण')}</th>
-                      <th className="py-2.5 px-4 text-right">{pick('Billed (NPR)', 'बिल रकम')}</th>
-                      <th className="py-2.5 px-4 text-right">{pick('Paid (NPR)', 'तिरेको रकम')}</th>
-                      <th className="py-2.5 px-4 text-right">{pick('Balance', 'बाँकी')}</th>
+                      <th className="py-2.5 px-4">
+                        {pick("Voucher #", "भौचर नं.")}
+                      </th>
+                      <th className="py-2.5 px-4">
+                        {pick("Particulars", "विवरण")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {pick("Billed (NPR)", "बिल रकम")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {pick("Paid (NPR)", "तिरेको रकम")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {pick("Balance", "बाँकी")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono tabular-nums text-[11px]">
                     <tr>
-                      <td className="py-2.5 px-4 text-slate-500">INV-2082-014</td>
+                      <td className="py-2.5 px-4 text-slate-500">
+                        INV-2082-014
+                      </td>
                       <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                        {pick('Baisakh Tuition & Lab Fee', 'वैशाख शिक्षण तथा प्रयोगशाला शुल्क')}
+                        {pick(
+                          "Baisakh Tuition & Lab Fee",
+                          "वैशाख शिक्षण तथा प्रयोगशाला शुल्क",
+                        )}
                       </td>
                       <td className="py-2.5 px-4 text-right">6,200.00</td>
-                      <td className="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">6,200.00</td>
-                      <td className="py-2.5 px-4 text-right text-slate-500">0.00</td>
+                      <td className="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">
+                        6,200.00
+                      </td>
+                      <td className="py-2.5 px-4 text-right text-slate-500">
+                        0.00
+                      </td>
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 text-slate-500">INV-2082-089</td>
+                      <td className="py-2.5 px-4 text-slate-500">
+                        INV-2082-089
+                      </td>
                       <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                        {pick('Jestha Bus Transit (Route 04)', 'जेठ बस यातायात शुल्क (रुट ०४)')}
+                        {pick(
+                          "Jestha Bus Transit (Route 04)",
+                          "जेठ बस यातायात शुल्क (रुट ०४)",
+                        )}
                       </td>
                       <td className="py-2.5 px-4 text-right">1,800.00</td>
-                      <td className="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">1,000.00</td>
-                      <td className="py-2.5 px-4 text-right font-semibold text-amber-600 dark:text-amber-400">800.00</td>
+                      <td className="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">
+                        1,000.00
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-semibold text-amber-600 dark:text-amber-400">
+                        800.00
+                      </td>
                     </tr>
                     <tr>
-                      <td className="py-2.5 px-4 text-slate-500">CON-2082-003</td>
+                      <td className="py-2.5 px-4 text-slate-500">
+                        CON-2082-003
+                      </td>
                       <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                        {pick('Merit Scholarship Waiver (15%)', 'जेहेन्दार छात्रवृत्ति छुट (१५%)')}
+                        {pick(
+                          "Merit Scholarship Waiver (15%)",
+                          "जेहेन्दार छात्रवृत्ति छुट (१५%)",
+                        )}
                       </td>
                       <td className="py-2.5 px-4 text-right">-</td>
-                      <td className="py-2.5 px-4 text-right text-indigo-600 dark:text-indigo-400">675.00</td>
-                      <td className="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-white">125.00</td>
+                      <td className="py-2.5 px-4 text-right text-indigo-600 dark:text-indigo-400">
+                        675.00
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-white">
+                        125.00
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <div className="px-5 py-3 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                <span>{pick('Cash + Bank Transfer + Card POS + Cheque', 'नगद + बैंक ट्रान्सफर + कार्ड POS + चेक')}</span>
+                <span>
+                  {pick(
+                    "Cash + Bank Transfer + Card POS + Cheque",
+                    "नगद + बैंक ट्रान्सफर + कार्ड POS + चेक",
+                  )}
+                </span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {pick('Net Payable: NPR 125.00', 'तिर्न बाँकी: रु. 125.00')}
+                  {pick("Net Payable: NPR 125.00", "तिर्न बाँकी: रु. 125.00")}
                 </span>
               </div>
             </div>
           )}
 
-          {activeTab === 'exams' && (
+          {activeTab === "exams" && (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    {pick('Terminal Broadsheet Matrix · First Term 2082', 'त्रैमासिक ब्रोडसिट म्याट्रिक्स · प्रथम परीक्षा २०८२')}
+                    {pick(
+                      "Terminal Broadsheet Matrix · First Term 2082",
+                      "त्रैमासिक ब्रोडसिट म्याट्रिक्स · प्रथम परीक्षा २०८२",
+                    )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    {pick('75% Theory + 25% Internal Practical · Auto Rank & GPA', '७५% सैद्धान्तिक + २५% प्रयोगात्मक · स्वतः स्थान र GPA')}
+                    {pick(
+                      "75% Theory + 25% Internal Practical · Auto Rank & GPA",
+                      "७५% सैद्धान्तिक + २५% प्रयोगात्मक · स्वतः स्थान र GPA",
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                   <button
                     type="button"
-                    onClick={() => setGradingBoard('NEB')}
+                    onClick={() => setGradingBoard("NEB")}
                     className={`px-2.5 py-1 text-[11px] font-mono font-semibold rounded-md transition-colors cursor-pointer ${
-                      gradingBoard === 'NEB'
-                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400'
+                      gradingBoard === "NEB"
+                        ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400"
                     }`}
                   >
-                    {pick('NEB Letter', 'NEB अक्षराङ्क')}
+                    {pick("NEB Letter", "NEB अक्षराङ्क")}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setGradingBoard('CBSE')}
+                    onClick={() => setGradingBoard("CBSE")}
                     className={`px-2.5 py-1 text-[11px] font-mono font-semibold rounded-md transition-colors cursor-pointer ${
-                      gradingBoard === 'CBSE'
-                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400'
+                      gradingBoard === "CBSE"
+                        ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400"
                     }`}
                   >
                     CBSE CGPA
@@ -281,116 +296,152 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 font-mono text-[11px]">
-                      <th className="py-2.5 px-4">{pick('Roll', 'रोल')}</th>
-                      <th className="py-2.5 px-4">{pick('Scholar', 'विद्यार्थी')}</th>
-                      <th className="py-2.5 px-4 text-right">{pick('Math', 'गणित')}</th>
-                      <th className="py-2.5 px-4 text-right">{pick('Science', 'विज्ञान')}</th>
-                      <th className="py-2.5 px-4 text-right">{pick('English', 'अंग्रेजी')}</th>
-                      <th className="py-2.5 px-4 text-right">{gradingBoard === 'NEB' ? pick('GPA / Grade', 'GPA / ग्रेड') : 'CGPA'}</th>
+                      <th className="py-2.5 px-4">{pick("Roll", "रोल")}</th>
+                      <th className="py-2.5 px-4">
+                        {pick("Scholar", "विद्यार्थी")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {pick("Math", "गणित")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {pick("Science", "विज्ञान")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {pick("English", "अंग्रेजी")}
+                      </th>
+                      <th className="py-2.5 px-4 text-right">
+                        {gradingBoard === "NEB"
+                          ? pick("GPA / Grade", "GPA / ग्रेड")
+                          : "CGPA"}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono tabular-nums text-[11px]">
                     <tr>
                       <td className="py-2.5 px-4 text-slate-500">01</td>
                       <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                        {pick('Aayusha Gurung', 'आयुषा गुरुङ')}
+                        {pick("Aayusha Gurung", "आयुषा गुरुङ")}
                       </td>
                       <td className="py-2.5 px-4 text-right">94</td>
                       <td className="py-2.5 px-4 text-right">91</td>
                       <td className="py-2.5 px-4 text-right">89</td>
                       <td className="py-2.5 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        {gradingBoard === 'NEB' ? '3.85 (A+)' : '9.6 CGPA'}
+                        {gradingBoard === "NEB" ? "3.85 (A+)" : "9.6 CGPA"}
                       </td>
                     </tr>
                     <tr>
                       <td className="py-2.5 px-4 text-slate-500">02</td>
                       <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                        {pick('Pratiksha Koirala', 'प्रतीक्षा कोइराला')}
+                        {pick("Pratiksha Koirala", "प्रतीक्षा कोइराला")}
                       </td>
                       <td className="py-2.5 px-4 text-right">86</td>
                       <td className="py-2.5 px-4 text-right">84</td>
                       <td className="py-2.5 px-4 text-right">88</td>
                       <td className="py-2.5 px-4 text-right font-bold text-indigo-600 dark:text-indigo-400">
-                        {gradingBoard === 'NEB' ? '3.55 (A)' : '8.9 CGPA'}
+                        {gradingBoard === "NEB" ? "3.55 (A)" : "8.9 CGPA"}
                       </td>
                     </tr>
                     <tr>
                       <td className="py-2.5 px-4 text-slate-500">03</td>
                       <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                        {pick('Rohan Maharjan', 'रोहन महर्जन')}
+                        {pick("Rohan Maharjan", "रोहन महर्जन")}
                       </td>
                       <td className="py-2.5 px-4 text-right">79</td>
                       <td className="py-2.5 px-4 text-right">82</td>
                       <td className="py-2.5 px-4 text-right">77</td>
                       <td className="py-2.5 px-4 text-right font-semibold text-slate-800 dark:text-slate-200">
-                        {gradingBoard === 'NEB' ? '3.25 (B+)' : '8.1 CGPA'}
+                        {gradingBoard === "NEB" ? "3.25 (B+)" : "8.1 CGPA"}
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <div className="px-5 py-3 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                <span>{pick('Batch A4 Transcript & Crest Watermark', 'ब्याच A4 लब्धाङ्कपत्र र लोगो वाटरमार्क')}</span>
+                <span>
+                  {pick(
+                    "Batch A4 Transcript & Crest Watermark",
+                    "ब्याच A4 लब्धाङ्कपत्र र लोगो वाटरमार्क",
+                  )}
+                </span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {pick('Zero Spreadsheet Macros', 'एक्सेल सूत्रको झन्झट शून्य')}
+                  {pick(
+                    "Zero Spreadsheet Macros",
+                    "एक्सेल सूत्रको झन्झट शून्य",
+                  )}
                 </span>
               </div>
             </div>
           )}
 
-          {activeTab === 'attendance' && (
+          {activeTab === "attendance" && (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
               <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">
-                    {pick('Morning Homeroom Register · Grade 8 Section B', 'बिहानी कक्षा हाजिरी · कक्षा ८ सेक्सन B')}
+                    {pick(
+                      "Morning Homeroom Register · Grade 8 Section B",
+                      "बिहानी कक्षा हाजिरी · कक्षा ८ सेक्सन B",
+                    )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    {pick('Offline roll-call · Printable absence notice slips', 'अफलाइन हाजिरी · प्रिन्ट गर्न मिल्ने अनुपस्थिति सूचना')}
+                    {pick(
+                      "Offline roll-call · Printable absence notice slips",
+                      "अफलाइन हाजिरी · प्रिन्ट गर्न मिल्ने अनुपस्थिति सूचना",
+                    )}
                   </div>
                 </div>
                 <span className="text-[11px] font-mono font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
-                  {pick('38 / 40 Present', '३८ / ४० उपस्थित')}
+                  {pick("38 / 40 Present", "३८ / ४० उपस्थित")}
                 </span>
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 {[
                   {
-                    roll: '04',
-                    name: pick('Nabin Tamang', 'नविन तामाङ'),
-                    status: pick('Present', 'उपस्थित'),
+                    roll: "04",
+                    name: pick("Nabin Tamang", "नविन तामाङ"),
+                    status: pick("Present", "उपस्थित"),
                     present: true,
-                    pct: '96.4%',
+                    pct: "96.4%",
                   },
                   {
-                    roll: '05',
-                    name: pick('Roshni Basnet', 'रोशनी बस्नेत'),
-                    status: pick('Absent · Print Slip Ready', 'अनुपस्थित · सूचना प्रिन्ट तयार'),
+                    roll: "05",
+                    name: pick("Roshni Basnet", "रोशनी बस्नेत"),
+                    status: pick(
+                      "Absent · Print Slip Ready",
+                      "अनुपस्थित · सूचना प्रिन्ट तयार",
+                    ),
                     present: false,
-                    pct: '78.2%',
+                    pct: "78.2%",
                   },
                   {
-                    roll: '06',
-                    name: pick('Sujan Poudel', 'सुजन पौडेल'),
-                    status: pick('Present', 'उपस्थित'),
+                    roll: "06",
+                    name: pick("Sujan Poudel", "सुजन पौडेल"),
+                    status: pick("Present", "उपस्थित"),
                     present: true,
-                    pct: '94.0%',
+                    pct: "94.0%",
                   },
                 ].map((row) => (
-                  <div key={row.roll} className="px-5 py-3 flex items-center justify-between gap-4">
+                  <div
+                    key={row.roll}
+                    className="px-5 py-3 flex items-center justify-between gap-4"
+                  >
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-[11px] text-slate-500 tabular-nums">#{row.roll}</span>
-                      <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
+                      <span className="font-mono text-[11px] text-slate-500 tabular-nums">
+                        #{row.roll}
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {row.name}
+                      </span>
                     </div>
                     <div className="flex items-center gap-4 text-[11px] font-mono tabular-nums">
                       <span className="text-slate-500">
-                        {row.pct} {pick('term avg', 'सत्र औसत')}
+                        {row.pct} {pick("term avg", "सत्र औसत")}
                       </span>
                       <span
                         className={`font-semibold ${
                           row.present
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-amber-600 dark:text-amber-400'
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-amber-600 dark:text-amber-400"
                         }`}
                       >
                         {row.status}
@@ -400,20 +451,25 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
                 ))}
               </div>
               <div className="px-5 py-3 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-600 dark:text-slate-400">
-                <span>{pick('80% Exam Eligibility Gate Check', '८०% परीक्षा योग्यता सीमा जाँच')}</span>
+                <span>
+                  {pick(
+                    "80% Exam Eligibility Gate Check",
+                    "८०% परीक्षा योग्यता सीमा जाँच",
+                  )}
+                </span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {pick('100% Offline Matrix', '१००% अफलाइन प्रणाली')}
+                  {pick("100% Offline Matrix", "१००% अफलाइन प्रणाली")}
                 </span>
               </div>
             </div>
           )}
 
-          {activeTab === 'provisioning' && (
+          {activeTab === "provisioning" && (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 space-y-4">
               <div className="text-xs font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
                 {pick(
-                  'Institutional Provisioning & Local Execution Boundary',
-                  'विद्यालय खाता सिर्जना र स्थानीय सञ्चालन सीमा'
+                  "Institutional Provisioning & Local Execution Boundary",
+                  "विद्यालय खाता सिर्जना र स्थानीय सञ्चालन सीमा",
                 )}
               </div>
               <div className="space-y-3 text-xs">
@@ -421,26 +477,15 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
                   <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <div className="font-semibold text-slate-900 dark:text-white">
-                      {pick('1. Super Admin Creates School Account', '१. सुपर एडमिनले विद्यालय खाता सिर्जना गर्छ')}
-                    </div>
-                    <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
                       {pick(
-                        'Accounts are provisioned centrally per partner campus with assigned terminal count and institutional code.',
-                        'प्रत्येक साझेदार विद्यालयका लागि तोकिएको टर्मिनल संख्या र संस्थागत कोडसहित केन्द्रीकृत खाता तयार गरिन्छ।'
+                        "1. Super Admin Creates School Account",
+                        "१. सुपर एडमिनले विद्यालय खाता सिर्जना गर्छ",
                       )}
                     </div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold text-slate-900 dark:text-white">
-                      {pick('2. School Administrator Logs In', '२. विद्यालय प्रशासकले लगइन गर्छन्')}
-                    </div>
                     <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
                       {pick(
-                        'Staff sign into their school’s dedicated dashboard, customize their crest, B.S./A.D. academic year, and grading standard.',
-                        'कर्मचारीले विद्यालयको छुट्टै ड्यासबोर्डमा लगइन गरी लोगो, वि.सं./ई.सं. शैक्षिक वर्ष र ग्रेडिङ प्रणाली सेट गर्छन्।'
+                        "Accounts are provisioned centrally per partner campus with assigned terminal count and institutional code.",
+                        "प्रत्येक साझेदार विद्यालयका लागि तोकिएको टर्मिनल संख्या र संस्थागत कोडसहित केन्द्रीकृत खाता तयार गरिन्छ।",
                       )}
                     </div>
                   </div>
@@ -450,14 +495,31 @@ export const InteractiveWorkspaceShowcase: React.FC = () => {
                   <div>
                     <div className="font-semibold text-slate-900 dark:text-white">
                       {pick(
-                        '3. 100% Offline Execution (Zero Cloud Support)',
-                        '३. १००% अफलाइन सञ्चालन (शून्य क्लाउड निर्भरता)'
+                        "2. School Administrator Logs In",
+                        "२. विद्यालय प्रशासकले लगइन गर्छन्",
                       )}
                     </div>
                     <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
                       {pick(
-                        'All student dossiers, fee settlements, payroll, exam broadsheets, and USB backups operate exclusively on local campus storage with zero cloud sync.',
-                        'सबै विद्यार्थी अभिलेख, शुल्क भुक्तानी, तलबमान, परीक्षा ब्रोडसिट र USB ब्याकअप क्लाउड सिंक बिना पूर्णतः स्थानीय भण्डारणमा चल्छन्।'
+                        "Staff sign into their school’s dedicated dashboard, customize their crest, B.S./A.D. academic year, and grading standard.",
+                        "कर्मचारीले विद्यालयको छुट्टै ड्यासबोर्डमा लगइन गरी लोगो, वि.सं./ई.सं. शैक्षिक वर्ष र ग्रेडिङ प्रणाली सेट गर्छन्।",
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {pick(
+                        "3. 100% Offline Execution (Zero Cloud Support)",
+                        "३. १००% अफलाइन सञ्चालन (शून्य क्लाउड निर्भरता)",
+                      )}
+                    </div>
+                    <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                      {pick(
+                        "All student dossiers, fee settlements, payroll, exam broadsheets, and USB backups operate exclusively on local campus storage with zero cloud sync.",
+                        "सबै विद्यार्थी अभिलेख, शुल्क भुक्तानी, तलबमान, परीक्षा ब्रोडसिट र USB ब्याकअप क्लाउड सिंक बिना पूर्णतः स्थानीय भण्डारणमा चल्छन्।",
                       )}
                     </div>
                   </div>
